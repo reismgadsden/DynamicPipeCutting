@@ -16,28 +16,33 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 
-def main(iters) -> list:
+def run_time_tests(iters, samples) -> list:
     price_arr = [1, 5, 8, 9, 10, 17, 17, 20]
     time_list = []
     time_list.append([])
     time_list.append([])
     for n in iters:
         n = int(n)
-        memo_arr = []
-        for i in range(0, n + 1):
-            memo_arr.append(-1)
+        recur_run_time = 0
+        memo_run_time = 0
+        for i in range(0, samples):
+            memo_arr = []
+            for i in range(0, n + 1):
+                memo_arr.append(-1)
 
-        start = timeit.default_timer()
-        max_recur = cut_rod(n, price_arr)
-        end = timeit.default_timer()
-        recur_run_time = end - start
-        time_list[0].append(recur_run_time)
+            start = timeit.default_timer()
+            max_recur = cut_rod(n, price_arr)
+            end = timeit.default_timer()
+            recur_run_time += (end - start)
 
-        start = timeit.default_timer()
-        max_memo = cut_rod_memo(n, price_arr, memo_arr)
-        end = timeit.default_timer()
-        memo_run_time = end - start
-        time_list[1].append(memo_run_time)
+            start = timeit.default_timer()
+            max_memo = cut_rod_memo(n, price_arr, memo_arr)
+            end = timeit.default_timer()
+            memo_run_time += (end - start)
+
+        time_list[0].append(recur_run_time / samples)
+        time_list[1].append(memo_run_time / samples)
+
 
     return time_list
 
@@ -63,7 +68,7 @@ def cut_rod_memo(n, price_arr, memo_arr) -> int:
     return q
 
 
-def compare_bars(time_list, labels):
+def compare_bars(time_list, labels, sample):
     fig, ax = plt.subplots()
     x = np.arange(len(labels))
     print(x)
@@ -72,11 +77,11 @@ def compare_bars(time_list, labels):
     recur_bar = ax.bar(x - width/2, time_list[0], width, label="Recursion")
     memo_bar = ax.bar(x + width/2, time_list[1], width, label="Recursion w/ Memoization")
 
-    ax.set_ylabel("Run Time")
-    #ax.set_xlabel("Input Size (n)")
+    ax.set_ylabel("Average run time over " + str(sample) + " total iterations")
     ax.set_xticks(x, labels)
     ax.set_title("Recursion vs. Recursion w/ Memoization Timings")
     ax.legend()
+    plt.xlabel("Pipe length")
 
     ax.bar_label(recur_bar, padding=3)
     ax.bar_label(memo_bar, padding=3)
@@ -86,7 +91,7 @@ def compare_bars(time_list, labels):
     plt.show()
 
 
-if __name__ == "__main__":
+def main() -> None:
     print("Timing the \"Dynamic Pipe Cutting\" Problem!\n")
     pattern = re.compile("^([0-9]*\\s)*[0-9]+$")
     iters = []
@@ -96,6 +101,19 @@ if __name__ == "__main__":
             iters = user_in.split(" ")
             break
         print("Invalid input, please try again!")
-    time_list = main(iters)
-    compare_bars(time_list, iters)
 
+    sample = 0
+    pattern = re.compile("^[1-9]([0-9]*)$")
+    while True:
+        user_in = input("Please enter the number of times you would like to test each number: ").strip()
+        if re.fullmatch(pattern, user_in):
+            sample = int(user_in)
+            break
+        print("Invalid input please try again!")
+
+    time_list = run_time_tests(iters, sample)
+    compare_bars(time_list, iters, sample)
+
+
+if __name__ == "__main__":
+    main()
